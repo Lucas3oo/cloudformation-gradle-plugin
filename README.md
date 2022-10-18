@@ -27,7 +27,7 @@ plugins {
 }
 task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
   parameters = [ s3BucketName : 's3-bucket4711']
-  stackName = "s3-buckets"
+  stackName = 's3-buckets'
   templateFileName = 'aws-cloudformation/aws-s3-buckets.yaml'
 }
 ```
@@ -78,7 +78,7 @@ task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
   capabilities = [ 'CAPABILITY_IAM'] // default empty
   enableTerminationProtection = true // default false
   parameters = [ s3BucketName : 's3-bucket4711']
-  stackName = "s3-buckets"
+  stackName = 's3-buckets'
   templateFileName = 'aws-cloudformation/aws-s3-buckets.yaml'
 }
 ```
