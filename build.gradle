@@ -17,7 +17,6 @@ dependencies {
   implementation 'org.ajoberstar.grgit:grgit-core:5.0.0'
   def awsSdkVersion = '2.17.292'
   implementation "software.amazon.awssdk:cloudformation:$awsSdkVersion"
-  //implementation "software.amazon.awssdk:sdk-core:$awsSdkVersion"
 
   testImplementation 'org.mockito:mockito-core:3.7.7'
   testImplementation 'org.mockito:mockito-junit-jupiter:3.7.7'
@@ -33,28 +32,30 @@ targetCompatibility = '11'
 
 tasks.withType(GroovyCompile) {
   configure(options) {
-      options.compilerArgs << '-Xlint:deprecation' << '-Xlint:unchecked'
+    options.compilerArgs << '-Xlint:deprecation' << '-Xlint:unchecked'
   }
 }
 
 sourceSets {
   main {
-      java {
-          srcDirs = [] // don't compile Java code twice
-      }
-      groovy {
-          srcDirs = [ 'src/main/groovy', 'src/main/java' ]
-      }
+    java {
+      srcDirs = [] // don't compile Java code twice
+    }
+    groovy {
+      srcDirs = [
+        'src/main/groovy',
+        'src/main/java'
+      ]
+    }
   }
   test {
     java {
-        srcDirs = [] // don't compile Java code twice
+      srcDirs = [] // don't compile Java code twice
     }
     groovy {
-        srcDirs = [ 'src/test/groovy']
+      srcDirs = ['src/test/groovy']
     }
-}
-
+  }
 }
 
 javadoc {
@@ -87,7 +88,9 @@ pluginBundle {
 
   // tags and description can be set for the whole bundle here, but can also
   // be set / overridden in the config for specific plugins
-  description = 'Deploys AWS Cloudformation stacks from a template. Min Gradle version 7.0.'
+  description = 'Gradle plugin for create/update and delete AWS Cloudformation stacks. ' +
+      'The parameters for the Cloudformation template can be managed per environment and kept ' +
+      'in for instance Java properties files. Min Gradle version 7.0.'
 
   // The plugins block can contain multiple plugin entries. The name for
   // each plugin block below (greetingsPlugin, goodbyePlugin)does not
@@ -102,7 +105,7 @@ pluginBundle {
     cloudformationPlugin {
       // id is captured from java-gradle-plugin configuration
       displayName = 'Cloudformation plugin'
-      tags = ['Cloudformation', 'AWS' ]
+      tags = ['Cloudformation', 'AWS']
     }
   }
 }

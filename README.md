@@ -56,7 +56,7 @@ The task will first check if the stack already exists and if it does it will upd
 
 Stack parameter names in the Cloudformation template is usually in PascalCase but in Gradle you usually use camelCase. So the task will convert the parameter names to be in PascalCase for you.
 
-The task can also filter out specific parameters give a name prefix. See below example.
+The task can also filters out specific parameters given a name prefix. See below example.
 
 The task will inline the Cloudformation template in the request to AWS. So it will not for instance store it in an S3 bucket. This means that the template can't be bigger than 51,200 bytes.
 
@@ -105,7 +105,7 @@ The task definition which takes the name of the properties file as a command lin
 task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
   group = 'AWS'
   description = 'Create S3 buckets using Cloudformation template. ' +
-      'Specify the enviroment to use with -Penv=<my-env>.'
+      'Specify the environment to use with -Penv=<my-env>.'
   parameters = project.objects.mapProperty(String, String).convention(project.provider({
                   Properties props = new Properties()
                   file("environments/${env}.properties").withInputStream { props.load(it) }
