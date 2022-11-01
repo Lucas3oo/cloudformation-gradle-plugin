@@ -12,7 +12,7 @@ Apply the plugin to your project.
 
 ```groovy
 plugins {
-  id 'se.solrike.cloudformation' version '1.0.0-beta.1'
+  id 'se.solrike.cloudformation' version '1.0.0-beta.2'
 }
 ```
 Gradle 7.0 or later must be used.
@@ -23,7 +23,7 @@ The tasks have to be created. Minimal example on how to create a task that creat
 
 ```groovy
 plugins {
-  id 'se.solrike.cloudformation' version '1.0.0-beta.1'
+  id 'se.solrike.cloudformation' version '1.0.0-beta.2'
 }
 task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
   parameters = [ s3BucketName : 's3-bucket4711']
@@ -64,6 +64,10 @@ The task will also create the following tags on the stack:
 * TemplateName - with the file name of the template
 * TemplateGitVersion - If the Gradle project is using GIT then the last commit info for the template is added.
 * CreatedBy/UpdatedBy - The local OS user's userID that executes the task.
+
+## How the DeleteStackTask works
+
+## How the PrintEnviromentParametersTask works
 
 ## More advanced example
 ### Example 1
@@ -128,9 +132,9 @@ If you have all sorts of properties in the properties file you can filter out th
 ```java
 # Java properties file for stage 25
 # Properties for the S3 template
-slrf.deploy.s3.s3BucketName: my-bucket-for-stage25
+slrk.deploy.s3.s3BucketName: my-bucket-for-stage25
 # Some property for another template
-slrf.deploy.sam.handler: se.solrike.cloud.serverless.StreamLambdaHandler::handleRequest
+slrk.deploy.sam.handler: se.solrike.cloud.serverless.StreamLambdaHandler::handleRequest
 ```
 
 
@@ -139,12 +143,69 @@ task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
   group = 'AWS'
   description = 'Create S3 buckets using Cloudformation template. ' +
       'Specify the environment to use with -Penv=<my-env>.'
+  parameterPrefix = 'slrk.deploy.s3.' // only include properties which begins with 'slrk.deploy.s3.'
   parameters = project.objects.mapProperty(String, String).convention(project.provider({
                   Properties props = new Properties()
                   file("environments/${env}.properties").withInputStream { props.load(it) }
                   props
                 }))
-  parameterPrefix = 'slrf.deploy.s3.' // only include properties which begins with 'slrf.deploy.s3.'
+  stackName = project.objects.property(String).convention(project.provider( {"s3-buckets-${env}"} ))
+  templateFileName = 'aws-cloudformation/aws-s3-buckets.yaml'
+}
+```
+
+### Example 3
+In a large complex setup there are more than one template and consequently a lot more stack parameters. Sometime you need to have the same value as input to several stacks and following DRY you need to be able to have variables in the properties files where you have the stacks parameters.
+
+The following example has two stacks which shares an S3 bucket. One creates it and the other consumes it. So the bucket name needs to be as a parameter to both of them. Also the a DB password is needed and you don't want to have that as clear text in the environment's properties files. The example is simply base 64 encoding the password but in real life it shall be encrypted of course.
+
+Properties file:
+
+```java
+# Java properties file for stage 25.
+# Values are "interpolated" (evaluated as they where Groovy script) so it means those can reference
+# other parameter and also be functions.
+
+# common props
+slrk.deploy.env.name: ${env}
+
+# Properties for the S3 template
+slrk.deploy.s3.s3BucketName: my-bucket-for-${slrk.deploy.env.name}
+
+# Some property for another template
+slrk.deploy.sam.handler: se.solrike.cloud.serverless.StreamLambdaHandler::handleRequest
+slrk.deploy.sam.s3BucketName: ${slrk.deploy.s3.s3BucketName}
+
+# DB user and password
+slrk.deploy.db.user: application-user
+slrk.deploy.db.password: ${MyUtils.decode('bXlub3Rzb3NlY3JldHBhc3N3b3JkCg==')}
+```
+
+Task to deploy and code in build.gradle to support the task.
+
+```groovy
+Properties loadProperties(String env) {
+  Properties props = new Properties()
+  file("environments/${env}.properties").withInputStream { props.load(it) }
+  // so that the property 'env' can be referenced in the env's properties file
+  props.setProperty('env', env)
+  return props
+}
+
+class MyUtils {
+  static String decode(String text) {
+    return new String(Base64.getDecoder().decode(text)).trim()
+  }
+}
+
+task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
+  group = 'AWS'
+  description = 'Create S3 buckets using Cloudformation template. ' +
+      'Specify the enviroment to use with -Penv=<my-env>.'
+  parameterPrefix = 'slrk.deploy.s3.' // only include properties which begins with 'slrf.deploy.s3.'
+  parameters = project.objects.mapProperty(String, String).convention(project.provider({loadProperties(env)}))
+  // pass in classloader so the MyUtils class above can be referenced in the env's properties file
+  parentClassLoader = getClass().getClassLoader()
   stackName = project.objects.property(String).convention(project.provider( {"s3-buckets-${env}"} ))
   templateFileName = 'aws-cloudformation/aws-s3-buckets.yaml'
 }

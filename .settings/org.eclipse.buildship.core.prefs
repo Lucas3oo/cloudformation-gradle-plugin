@@ -1,2 +1,2 @@
-connection.project.dir=../spring-aws-serverless
+connection.project.dir=../s3deploy
 eclipse.preferences.version=1

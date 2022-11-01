@@ -48,14 +48,6 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
   public abstract Property<Boolean> getEnableTerminationProtection()
 
   /**
-   * The template parameters.
-   * <p>
-   * Parameter names will be converted to PascalCase-ish since that is what Cloudformation templates expects.
-   */
-  @Input
-  public abstract MapProperty<String, String> getParameters()
-
-  /**
    * Optionally specify a parameter name prefix to filter out the parameters to use.
    * <p>
    * The submitted parameter names will have the prefix string removed from the names.
@@ -63,6 +55,14 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
   @Input
   @Optional
   public abstract Property<String> getParameterPrefix()
+
+  /**
+   * The template parameters.
+   * <p>
+   * Parameter names will be converted to PascalCase-ish since that is what Cloudformation templates expects.
+   */
+  @Input
+  public abstract MapProperty<String, String> getParameters()
 
   /**
    * Stack name.
