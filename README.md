@@ -1,7 +1,8 @@
 # cloudformation-gradle-plugin
 Gradle plugin for create/update and delete AWS Cloudformation stacks.
 The parameters for the Cloudformation template can be managed per environment and kept in
-for instance Java properties files.
+for instance Java properties files. Values in the Java properties files will be "interpolated"
+according to Groovy's evaluation. That is, properties can reference other properties and Groovy/Java functions.
 
 
 ## Usage
@@ -54,10 +55,13 @@ The usual credential and region chain is used to find the credentials and the re
 
 The task will first check if the stack already exists and if it does it will update the existing stack.
 
-Stack parameter names in the Cloudformation template is usually in PascalCase but in Gradle you usually use camelCase. So the task will convert the parameter names to be in PascalCase for you.
-If a parameter's value has Groovy's notation for string interpolation those will be evaluated (expanded). That means a parameter's value can reference another parameter or even a Groovy/Java function. See below example.
+Parameters for the stack is passed in as `Map` to the task. The map can in turn be inlined or be read from a Java properties file or any other file that can be deserialised into a map.
 
-The task can also filters out specific parameters given a name prefix. See below example.
+Stack parameter names in the Cloudformation template is usually in PascalCase but in Gradle you usually use camelCase. So the task will convert the parameter names to be in PascalCase for you.
+
+If a parameter's value has Groovy's notation for string interpolation those will be evaluated (expanded). That means a parameter's value can reference another parameter or even a Groovy/Java function. See example 3 below.
+
+The task can also filters out specific parameters given a name prefix. See example 2.1 below.
 
 The task will inline the Cloudformation template in the request to AWS. So it will not for instance store it in an S3 bucket. This means that the template can't be bigger than 51,200 bytes.
 
@@ -79,7 +83,7 @@ task deleteS3Stack(type: se.solrike.cloudformation.DeleteStackTask) {
 
 ## How the PrintEnviromentParametersTask works
 This task is mostly interested in order to debug a complex setup. It will take a map of parameters and
-resolve all the values and then print those on the console.
+resolve all the values and then print those on the console. Here the map of parameters is read from a Java properties file.
 
 ```groovy
 task printEnv(type: se.solrike.cloudformation.PrintEnviromentParametersTask) {
