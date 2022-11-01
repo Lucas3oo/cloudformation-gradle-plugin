@@ -30,12 +30,6 @@ import software.amazon.awssdk.services.cloudformation.model.UpdateStackResponse
  */
 abstract class PrintEnviromentParametersTask extends DefaultTask {
 
-  /**
-   * The build script's class loader so that this task can find e.g. classes defined in the build.gradle.
-   */
-  @Input
-  @Optional
-  public abstract Property<ClassLoader> getParentClassLoader()
 
   /**
    * The parameters.
@@ -43,6 +37,12 @@ abstract class PrintEnviromentParametersTask extends DefaultTask {
   @Input
   public abstract MapProperty<String, String> getParameters()
 
+  /**
+   * The build script's class loader so that this task can find e.g. classes defined in the build.gradle.
+   */
+  @Input
+  @Optional
+  public abstract Property<ClassLoader> getParentClassLoader()
 
 
   @TaskAction

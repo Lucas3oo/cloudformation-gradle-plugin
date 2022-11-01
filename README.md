@@ -55,6 +55,7 @@ The usual credential and region chain is used to find the credentials and the re
 The task will first check if the stack already exists and if it does it will update the existing stack.
 
 Stack parameter names in the Cloudformation template is usually in PascalCase but in Gradle you usually use camelCase. So the task will convert the parameter names to be in PascalCase for you.
+If a parameter's value has Groovy's notation for string interpolation those will be evaluated (expanded). That means a parameter's value can reference another parameter or even a Groovy/Java function. See below example.
 
 The task can also filters out specific parameters given a name prefix. See below example.
 
@@ -65,9 +66,35 @@ The task will also create the following tags on the stack:
 * TemplateGitVersion - If the Gradle project is using GIT then the last commit info for the template is added.
 * CreatedBy/UpdatedBy - The local OS user's userID that executes the task.
 
+
+
 ## How the DeleteStackTask works
+The task will delete a stack. Typically define a task like this:
+
+```groovy
+task deleteS3Stack(type: se.solrike.cloudformation.DeleteStackTask) {
+  stackName = "s3-buckets"
+}
+```
 
 ## How the PrintEnviromentParametersTask works
+This task is mostly interested in order to debug a complex setup. It will take a map of parameters and
+resolve all the values and then print those on the console.
+
+```groovy
+task printEnv(type: se.solrike.cloudformation.PrintEnviromentParametersTask) {
+  description = 'Print the resolved parameters for the environment. ' +
+      'Specify the enviroment to use with -Penv=<my-env>.'
+  parameters = project.objects.mapProperty(String, String).convention(project.provider({
+                  Properties props = new Properties()
+                  file("environments/${env}.properties").withInputStream { props.load(it) }
+                  props
+                }))
+  // pass in classloader so custom Groovy classes can be referenced in the env's properties file
+  parentClassLoader = getClass().getClassLoader()
+}
+```
+
 
 ## More advanced example
 ### Example 1
@@ -155,7 +182,7 @@ task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
 ```
 
 ### Example 3
-In a large complex setup there are more than one template and consequently a lot more stack parameters. Sometime you need to have the same value as input to several stacks and following DRY you need to be able to have variables in the properties files where you have the stacks parameters.
+In a large complex setup there are more than one template and consequently a lot more stack parameters. Sometimes you need to have the same value as input to several stacks and following DRY you need to be able to have variables in the properties files where you have the stacks parameters.
 
 The following example has two stacks which shares an S3 bucket. One creates it and the other consumes it. So the bucket name needs to be as a parameter to both of them. Also the a DB password is needed and you don't want to have that as clear text in the environment's properties files. The example is simply base 64 encoding the password but in real life it shall be encrypted of course.
 
@@ -181,7 +208,7 @@ slrk.deploy.db.user: application-user
 slrk.deploy.db.password: ${MyUtils.decode('bXlub3Rzb3NlY3JldHBhc3N3b3JkCg==')}
 ```
 
-Task to deploy and code in build.gradle to support the task.
+Task to deploy and Groovy code in build.gradle to support the task.
 
 ```groovy
 Properties loadProperties(String env) {
@@ -202,7 +229,7 @@ task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
   group = 'AWS'
   description = 'Create S3 buckets using Cloudformation template. ' +
       'Specify the enviroment to use with -Penv=<my-env>.'
-  parameterPrefix = 'slrk.deploy.s3.' // only include properties which begins with 'slrf.deploy.s3.'
+  parameterPrefix = 'slrk.deploy.s3.' // only include properties which begins with 'slrk.deploy.s3.'
   parameters = project.objects.mapProperty(String, String).convention(project.provider({loadProperties(env)}))
   // pass in classloader so the MyUtils class above can be referenced in the env's properties file
   parentClassLoader = getClass().getClassLoader()
@@ -216,6 +243,11 @@ task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
 
 
 ## Release notes
+
+### 1.0.0-beta.2
+* Supports Groovy string interpolation of values for the stack parameters.
+* Added new task; `PrintEnviromentParametersTask`.
+
 
 ### 1.0.0-beta.1
 Tasks for create/update a stack and delete a stack.

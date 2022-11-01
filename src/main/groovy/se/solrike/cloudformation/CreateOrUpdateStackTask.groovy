@@ -65,6 +65,13 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
   public abstract MapProperty<String, String> getParameters()
 
   /**
+   * The build script's class loader so that this task can find e.g. classes defined in the build.gradle.
+   */
+  @Input
+  @Optional
+  public abstract Property<ClassLoader> getParentClassLoader()
+
+  /**
    * Stack name.
    */
   @Input
@@ -99,7 +106,7 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
     CreateStackRequest.Builder builder = CreateStackRequest.builder()
     builder.stackName(getStackName().get())
         .templateBody(createTemplateBody())
-        .parameters(createParameterList(optinallyFilterParameters()))
+        .parameters(createParameterList(resolveAndOptinallyFilterParameters()))
         .tags(createTags('CreatedBy'))
         .enableTerminationProtection(getEnableTerminationProtection().getOrElse(false))
 
@@ -121,7 +128,7 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
     UpdateStackRequest.Builder builder = UpdateStackRequest.builder()
     builder.stackName(getStackName().get())
         .templateBody(createTemplateBody())
-        .parameters(createParameterList(optinallyFilterParameters()))
+        .parameters(createParameterList(resolveAndOptinallyFilterParameters()))
         .tags(createTags('UpdatedBy'))
 
     if (getCapabilities().present) {
@@ -136,8 +143,9 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
     }
   }
 
-  Map<String, String> optinallyFilterParameters() {
-    Map<String, String> parameters = getParameters().get()
+  Map<String, String> resolveAndOptinallyFilterParameters() {
+    Map parameters = ParameterResolver.resolve(getParameters().get(),
+      getParentClassLoader().getOrElse(getClass().getClassLoader()))
     if (getParameterPrefix().present) {
       String prefix = getParameterPrefix().get()
       parameters = parameters.findAll {
