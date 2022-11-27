@@ -10,8 +10,9 @@ repositories {
 
 dependencies {
   implementation 'org.ajoberstar.grgit:grgit-core:5.0.0'
-  def awsSdkVersion = '2.17.292'
+  def awsSdkVersion = '2.18.24'
   implementation "software.amazon.awssdk:cloudformation:$awsSdkVersion"
+  implementation "software.amazon.awssdk:ssm:$awsSdkVersion"
 
   testImplementation('org.assertj:assertj-core:3.22.0')
   testImplementation('org.junit.jupiter:junit-jupiter')
@@ -19,7 +20,7 @@ dependencies {
 }
 
 group = 'se.solrike.cloudformation'
-version = '1.0.0-beta.3'
+version = '1.0.0'
 java {
   sourceCompatibility = JavaVersion.VERSION_11
   targetCompatibility = JavaVersion.VERSION_11
@@ -108,7 +109,8 @@ pluginBundle {
   pluginTags = [
     cloudformationPlugin: [
       'Cloudformation',
-      'AWS'
+      'AWS',
+      'continues deployment'
     ]
   ]
 }

@@ -102,10 +102,10 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
     println "Stack '${getStackName().get()}' is ready."
 
     // Check if the stack has any outputs defined that can be listed.
-    DescribeStacksResponse stack = client.describeStacks {
+    DescribeStacksResponse response = client.describeStacks {
       it.stackName(getStackName().get())
     }
-    stack.stacks().get(0).outputs().forEach({output -> println "$output.outputKey : $output.outputValue"})
+    response.stacks().get(0).outputs().forEach({output -> println "$output.outputKey : $output.outputValue"})
   }
 
   void createStack() {
@@ -126,8 +126,6 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
     WaiterResponse<DescribeStacksResponse> waiterResponse = client.waiter().waitUntilStackCreateComplete {
       it.stackName(getStackName().get())
     }
-    //    def outputs = waiterResponse.matched().response().get().stacks().get(0).outputs()
-    //    println outputs
   }
 
   void updateStack() {
@@ -164,7 +162,6 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
   }
 
   // read the content of the template file and return it as a big string
-  // TODO check the size of the string and fail if it is to big? But AWS will fail it anyway.
   String createTemplateBody() {
     return new File(getTemplateFileName().get()).text
   }

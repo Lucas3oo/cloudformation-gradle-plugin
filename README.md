@@ -4,6 +4,9 @@ The parameters for the Cloudformation template can be managed per environment an
 for instance Java properties files. Values in the Java properties files will be "interpolated"
 according to Groovy's evaluation. That is, properties can reference other properties and Groovy/Java functions.
 
+The plugin also has utilities to do stack resource lookups. I.e. lookup a stack's logical resource to get its
+physical resource ID.
+
 
 ## Usage
 
@@ -13,7 +16,7 @@ Apply the plugin to your project.
 
 ```groovy
 plugins {
-  id 'se.solrike.cloudformation' version '1.0.0-beta.3'
+  id 'se.solrike.cloudformation' version '1.0.0'
 }
 ```
 Gradle 7.0 or later must be used.
@@ -24,7 +27,7 @@ The tasks have to be created. Minimal example on how to create a task that creat
 
 ```groovy
 plugins {
-  id 'se.solrike.cloudformation' version '1.0.0-beta.3'
+  id 'se.solrike.cloudformation' version '1.0.0'
 }
 task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
   parameters = [ s3BucketName : 's3-bucket4711']
@@ -49,13 +52,18 @@ Resources:
 
 AWS credentials needs to be configured. E.g. environment variables or using `aws configure` CLI or Java system properties.
 
-## The plugin provides three task
+## The plugin provides three tasks and some utils methods
 The plugin provides three tasks that all need to be created manually. They will not be created when the plugin is
 applied.
 
 * CreateOrUpdateStackTask
 * DeleteStackTask
 * PrintEnviromentParametersTask
+
+Utility methods:
+
+* se.solrike.cloudformation.StackUtils.resolveStackResource(...)
+* se.solrike.cloudformation.StackUtils.resolveStackOutput(...)
 
 ## How the CreateOrUpdateStackTask works
 The usual credential and region chain is used to find the credentials and the region to use.
@@ -84,7 +92,7 @@ The task will delete a stack. Typically define a task like this:
 
 ```groovy
 task deleteS3Stack(type: se.solrike.cloudformation.DeleteStackTask) {
-  stackName = "s3-buckets"
+  stackName = 's3-buckets'
 }
 ```
 
@@ -106,6 +114,37 @@ task printEnv(type: se.solrike.cloudformation.PrintEnviromentParametersTask) {
 }
 ```
 
+## How the StackUtils.resolveStackResource(...) works
+The method will resolve a AWS Cloudformation stack logical resource ID to a physical resource ID.
+
+In a complex setup it is sometimes required to pass resource IDs from one stack to another. One what is to import the value from the dependent stack. But sometimes it might not be possible.
+
+E.g.
+
+```
+task lookupStackResource {
+  doLast {
+    println se.solrike.cloudformation.StackUtils.resolveStackResource(
+      'my-stack-name', 'ServerlessFunctionApiAnyEventPermission')
+  }
+}
+```
+
+## How the StackUtils.resolveStackOutput(...) works
+The method will resolve an output of a stack using the output's key.
+
+In a complex setup it is sometimes required to pass outputs from one stack to another. One what is to import the value from the dependent stack. But sometimes it might not be possible.
+
+E.g.
+
+```
+task lookupStackOutput {
+  doLast {
+    println se.solrike.cloudformation.StackUtils.resolveStackOutput(
+      'my-stack-name', 'LogGroupName')
+  }
+}
+```
 
 ## More advanced example
 ### Example 1
@@ -254,8 +293,9 @@ task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
 
 
 ## Release notes
-### 1.0.0-beta.3
-Then the stack is ready any outputs form the stack will be listed on the console.
+### 1.0.0
+Then the stack is ready any outputs from the stack will be listed on the console.
+New utils function to fetch an ID of stack's resource. I.e. translate the logical ID to a physical ID.
 
 ### 1.0.0-beta.2
 * Supports Groovy string interpolation of values for the stack parameters.
