@@ -100,6 +100,12 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
       createStack()
     }
     println "Stack '${getStackName().get()}' is ready."
+
+    // Check if the stack has any outputs defined that can be listed.
+    DescribeStacksResponse stack = client.describeStacks {
+      it.stackName(getStackName().get())
+    }
+    stack.stacks().get(0).outputs().forEach({output -> println "$output.outputKey : $output.outputValue"})
   }
 
   void createStack() {
@@ -145,7 +151,7 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
 
   Map<String, String> resolveAndOptinallyFilterParameters() {
     Map parameters = ParameterResolver.resolve(getParameters().get(),
-      getParentClassLoader().getOrElse(getClass().getClassLoader()))
+        getParentClassLoader().getOrElse(getClass().getClassLoader()))
     if (getParameterPrefix().present) {
       String prefix = getParameterPrefix().get()
       parameters = parameters.findAll {
@@ -157,6 +163,8 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
     return parameters
   }
 
+  // read the content of the template file and return it as a big string
+  // TODO check the size of the string and fail if it is to big? But AWS will fail it anyway.
   String createTemplateBody() {
     return new File(getTemplateFileName().get()).text
   }
@@ -188,7 +196,7 @@ abstract class CreateOrUpdateStackTask extends DefaultTask {
 
 
   // There isn't any SDK call that can check if the stack exists or not.
-  // So try get info of the stack and if that fails the assumption is that is then doesn't exists.
+  // So try get info of the stack and if that fails the assumption it that it doesn't exists.
   boolean stackExists(String stackName) {
     try {
       DescribeStacksResponse stack = client.describeStacks {

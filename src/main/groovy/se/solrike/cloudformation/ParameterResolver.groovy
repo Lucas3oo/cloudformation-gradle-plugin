@@ -44,7 +44,7 @@ public class ParameterResolver {
     }
   }
 
-  // flattern the map and re-create the dot notation or the keys
+  // flattern the map and re-create the dot notation of the keys
   static void flatternMap(Map source, Map target, String prefix) {
     source.each {
       String key = prefix ? prefix + '.' + it.key : it.key
@@ -56,5 +56,4 @@ public class ParameterResolver {
       }
     }
   }
-
 }

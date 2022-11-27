@@ -12,22 +12,23 @@ import org.eclipse.jgit.errors.RepositoryNotFoundException
  */
 public class Utils {
 
-
   public static String getGitVersionOfFile(File projectDir, String fileName) {
     try {
       Grgit repo = Grgit.open(dir: projectDir)
       Commit commit = repo.log(paths: [fileName], maxCommits: 1)[0]
       if (commit != null) {
-        String commitDateTime = commit.dateTime.format(DateTimeFormatter.ofPattern('yyyy-MM-dd\'T\'HH:mm:ssZ'))
-        String version = "${commit.abbreviatedId} ${commitDateTime} ${commit.author.name}: ${commit.shortMessage}"
-        version = version.replace(';', '')
-            .replace('\$', '')
-            .replace('\n', '')
-            .replace('\'', '')
-            .replace(',', '')
-            .replace('\"', '')
-            .replace('!', '')
-        return version
+        // commit DateTime with time zone offset, e.g. 2022-11-26T13:42:40+01:00
+        String commitDateTime = commit.dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        String version = "$commit.abbreviatedId $commitDateTime $commit.author.name $commit.shortMessage"
+        def replacements = [
+          '!':'',
+          ';':'',
+          ',':'',
+          '\$':'',
+          '\n':'',
+          '\'':'',
+          '\"':'']
+        return version.replace(replacements)
       }
       else {
         return 'Not under version control'

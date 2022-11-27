@@ -1,12 +1,7 @@
 plugins {
-  id 'java-gradle-plugin'
+  id 'eclipse'
   id 'groovy'
-
-  // Apply the Plugin Publish Plugin to make plugin publication possible
-  id 'com.gradle.plugin-publish' version '0.20.0'
-
-  // Apply the Maven Publish Plugin to have it generate the publication metadata
-  id 'maven-publish'
+  id 'com.gradle.plugin-publish' version '1.0.0' // plugin publication, and java-gradle-plugin and maven-publish plugins
 }
 
 repositories {
@@ -18,17 +13,17 @@ dependencies {
   def awsSdkVersion = '2.17.292'
   implementation "software.amazon.awssdk:cloudformation:$awsSdkVersion"
 
-  testImplementation 'org.mockito:mockito-core:3.7.7'
-  testImplementation 'org.mockito:mockito-junit-jupiter:3.7.7'
   testImplementation('org.assertj:assertj-core:3.22.0')
   testImplementation('org.junit.jupiter:junit-jupiter')
   testImplementation(platform('org.junit:junit-bom:5.8.2'))
 }
 
 group = 'se.solrike.cloudformation'
-version = '1.0.0-beta.2'
-sourceCompatibility = '11'
-targetCompatibility = '11'
+version = '1.0.0-beta.3'
+java {
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
+}
 
 tasks.withType(GroovyCompile) {
   configure(options) {
@@ -65,11 +60,29 @@ groovydoc {
   enabled = false
 }
 
+// folder names that ends with 'nosync' will not be synced to iCloud drive.
+eclipse {
+  classpath {
+    def mainOutputDir = 'bin.nosync/main'
+    defaultOutputDir = file(mainOutputDir)
+    file {
+      whenMerged {
+        entries.findAll({it.kind == 'src'}).each {
+          if (it.path.contains('main') || it.path == '.apt_generated') {
+            it.output = mainOutputDir
+          }
+          else if (it.path.contains('test')) {
+            it.output = 'bin.nosync/test'
+          }
+        }
+      }
+    }
+  }
+}
 
 test {
   useJUnitPlatform()
 }
-
 
 // publish the plugin like: ./gradlew publishPlugins
 gradlePlugin {
@@ -77,37 +90,27 @@ gradlePlugin {
     cloudformationPlugin {
       id = group
       implementationClass = 'se.solrike.cloudformation.CloudformationPlugin'
+      displayName = 'Cloudformation plugin'
+      description =
+          'Gradle plugin for create/update and delete AWS Cloudformation stacks. ' +
+          'The parameters for the Cloudformation template can be managed per environment and kept in ' +
+          'for instance Java properties files. Values in the Java properties files will be "interpolated" ' +
+          'according to Groovy\'s evaluation. That is, properties can reference other properties ' +
+          'and Groovy/Java functions. ' +
+          '\nMin Gradle version 7.0.'
     }
   }
 }
 
 pluginBundle {
-  // These settings are set for the whole plugin bundle
   website = 'https://github.com/Lucas3oo/cloudformation-gradle-plugin'
   vcsUrl = website
-
-  // tags and description can be set for the whole bundle here, but can also
-  // be set / overridden in the config for specific plugins
-  description = 'Gradle plugin for create/update and delete AWS Cloudformation stacks. ' +
-      'The parameters for the Cloudformation template can be managed per environment and kept ' +
-      'in for instance Java properties files. Min Gradle version 7.0.'
-
-  // The plugins block can contain multiple plugin entries. The name for
-  // each plugin block below (greetingsPlugin, goodbyePlugin)does not
-  // affect the plugin configuration, but they need to be unique for each plugin.
-
-  // Plugin config blocks can set the displayName, description and tags for
-  // each plugin. displayName is mandatory. If no tags or description are set
-  // the tags or description from the pluginBundle block will be used,
-  // but they must be set in one of the two places.
-
-  plugins {
-    cloudformationPlugin {
-      // id is captured from java-gradle-plugin configuration
-      displayName = 'Cloudformation plugin'
-      tags = ['Cloudformation', 'AWS']
-    }
-  }
+  pluginTags = [
+    cloudformationPlugin: [
+      'Cloudformation',
+      'AWS'
+    ]
+  ]
 }
 
 // to upgrade the metainfo about which gradle version we shall use. Run ./gradlew wrapper after you have updated the version. The commit the new wrapper files except the gradlew.bat

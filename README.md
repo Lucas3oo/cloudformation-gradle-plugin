@@ -13,7 +13,7 @@ Apply the plugin to your project.
 
 ```groovy
 plugins {
-  id 'se.solrike.cloudformation' version '1.0.0-beta.2'
+  id 'se.solrike.cloudformation' version '1.0.0-beta.3'
 }
 ```
 Gradle 7.0 or later must be used.
@@ -24,7 +24,7 @@ The tasks have to be created. Minimal example on how to create a task that creat
 
 ```groovy
 plugins {
-  id 'se.solrike.cloudformation' version '1.0.0-beta.2'
+  id 'se.solrike.cloudformation' version '1.0.0-beta.3'
 }
 task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
   parameters = [ s3BucketName : 's3-bucket4711']
@@ -49,6 +49,13 @@ Resources:
 
 AWS credentials needs to be configured. E.g. environment variables or using `aws configure` CLI or Java system properties.
 
+## The plugin provides three task
+The plugin provides three tasks that all need to be created manually. They will not be created when the plugin is
+applied.
+
+* CreateOrUpdateStackTask
+* DeleteStackTask
+* PrintEnviromentParametersTask
 
 ## How the CreateOrUpdateStackTask works
 The usual credential and region chain is used to find the credentials and the region to use.
@@ -247,6 +254,8 @@ task deployS3Stack(type: se.solrike.cloudformation.CreateOrUpdateStackTask) {
 
 
 ## Release notes
+### 1.0.0-beta.3
+Then the stack is ready any outputs form the stack will be listed on the console.
 
 ### 1.0.0-beta.2
 * Supports Groovy string interpolation of values for the stack parameters.
